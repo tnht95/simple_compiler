@@ -71,10 +71,7 @@ pub struct Parser<'a> {
 
 impl<'a> Parser<'a> {
     pub fn new(tokens: Vec<Token<'a>>) -> Self {
-        Self {
-            tokens,
-            pos: 0,
-        }
+        Self { tokens, pos: 0 }
     }
 
     pub fn parse(&mut self) -> Result<Program, String> {
@@ -343,7 +340,11 @@ impl<'a> Parser<'a> {
         self.parse_expression_with_precedence(0, left)
     }
 
-    fn parse_expression_with_precedence(&mut self, min_precedence: u8, left: Expression) -> Result<Expression, String> {
+    fn parse_expression_with_precedence(
+        &mut self,
+        min_precedence: u8,
+        left: Expression,
+    ) -> Result<Expression, String> {
         let mut res = left;
         while let Some(operator) = self.peek_operator() {
             let precedence = self.operator_precedence(&operator);
@@ -352,7 +353,7 @@ impl<'a> Parser<'a> {
             }
 
             self.next(); // Consume the operator
-            // parse the current term to pass along
+                         // parse the current term to pass along
             let current_term = self.parse_term()?;
             let right = self.parse_expression_with_precedence(precedence + 1, current_term)?;
             res = Expression::ArithmeticExpression {
@@ -381,5 +382,4 @@ impl<'a> Parser<'a> {
             Operator::Add | Operator::Subtract => 1,
         }
     }
-
 }
