@@ -1,0 +1,69 @@
+program = { statement } ;
+
+(* Statements *)
+statement = variable_declaration
+          | function_declaration
+          | function_call
+          | assignment
+          | ";" ;
+
+(* Variable declaration *)
+variable_declaration = "this", identifier, "=", expression, ";" ;
+
+(* Function declaration *)
+function_declaration = "fn " identifier
+                       "(", [ parameter_list ], ")",
+                       [ "->" , type_annotation ],
+                       block ;
+
+(* Parameter list *)
+parameter_list = parameter, { ",", parameter } ;
+parameter = identifier, ":", type_annotation ;
+
+(* Block of function body *)
+block = "{", { statement }, [ return_statement ], "}" ;
+
+(* Return statement *)
+return_statement = "return", expression, ";" ;
+
+(* Function call *)
+function_call = identifier, "(", [ argument_list ], ")" ;
+function_call_statement = function_call, ";" ;
+
+(* Assignment *)
+assignment = identifier, "=", expression;
+
+(* Argument list *)
+argument_list = expression, { ",", expression } ;
+
+(* Expressions *)
+expression = arithmetic_expression
+           | function_call
+           | identifier
+           | integer ;
+
+(* Arithmetic expression with nested function calls *)
+arithmetic_expression = term, { ("+"|"-"|"*"|"/"), term } ;
+term = identifier
+     | integer
+     | function_call;
+
+(* Identifiers and literals *)
+identifier = letter, { letter } ;
+
+(* Basic types *)
+type_annotation = "int" ;
+
+(* Character sets *)
+letter = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J"
+       | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T"
+       | "U" | "V" | "W" | "X" | "Y" | "Z"
+       | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j"
+       | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t"
+       | "u" | "v" | "w" | "x" | "y" | "z" ;
+
+digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+
+(* Integer definition *)
+integer       = ["-"],digit,{digit};
+
