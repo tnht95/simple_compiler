@@ -1,5 +1,4 @@
 use crate::lexer::Token;
-use std::collections::HashSet;
 
 #[derive(Debug, Clone)]
 pub enum Program {
@@ -65,54 +64,9 @@ pub enum TypeAnnotation {
     Int,
 }
 
-// #[derive(Debug, Clone)]
-// pub enum AstNode {
-//     Program(Vec<Statement>),
-//     VariableDeclaration { name: String, value: Expression },
-//     Assignment { name: String, value: Expression },
-//     FunctionDeclaration {
-//         name: String,
-//         parameters: Vec<(String, TypeAnnotation)>,
-//         return_type: Option<TypeAnnotation>,
-//         body: Vec<Statement>,
-//     },
-//     FunctionCall {
-//         name: String,
-//         arguments: Vec<Expression>,
-//     },
-//     Expression(Expression),
-// }
-//
-//
-// #[derive(Debug, Clone)]
-// pub enum Expression {
-//     Integer(i64),
-//     Identifier(String),
-//     FunctionCall(Box<AstNode>),
-//     ArithmeticExpression {
-//         left: Box<Term>,
-//         operator: char,
-//         right: Box<Term>,
-//     },
-// }
-//
-// #[derive(Debug, Clone)]
-// pub enum TypeAnnotation {
-//     Int,
-// }
-//
-// #[derive(Debug, Clone)]
-// pub enum Statement {
-//     VariableDeclaration(AstNode),
-//     FunctionDeclaration(AstNode),
-//     FunctionCall(AstNode),
-//     Assignment(AstNode),
-// }
-
 pub struct Parser<'a> {
     tokens: Vec<Token<'a>>,
     pos: usize,
-    symbol_table: HashSet<String>,
 }
 
 impl<'a> Parser<'a> {
@@ -120,7 +74,6 @@ impl<'a> Parser<'a> {
         Self {
             tokens,
             pos: 0,
-            symbol_table: Default::default(),
         }
     }
 
