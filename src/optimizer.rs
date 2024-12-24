@@ -1,4 +1,4 @@
-use crate::parser::{Block, Expression, Operator, Program, Statement};
+use crate::parser::{Block, Condition, Expression, Operator, Program, Statement};
 
 pub struct Optimizer;
 
@@ -41,6 +41,18 @@ impl Optimizer {
                 value: Self::constant_fold(&value),
             },
             Statement::Print(expression) => Statement::Print(Self::constant_fold(&expression)),
+            Statement::IfStatement {
+                condition,
+                then_block,
+                else_block,
+            } => Statement::IfStatement {
+                condition: Self::optimize_condition(condition),
+                then_block: Self::optimize_block(then_block),
+                else_block: match else_block {
+                    None => else_block,
+                    Some(block) => Some(Self::optimize_block(block)),
+                },
+            },
         }
     }
 
@@ -54,6 +66,20 @@ impl Optimizer {
             return_expression: block
                 .return_expression
                 .map(|expr| Self::constant_fold(&expr)),
+        }
+    }
+
+    fn optimize_condition(condition: Condition) -> Condition {
+        match condition {
+            Condition::Comparison {
+                left,
+                operator,
+                right,
+            } => Condition::Comparison {
+                left: Self::constant_fold(&left),
+                operator,
+                right: Self::constant_fold(&right),
+            },
         }
     }
     pub fn constant_fold(expression: &Expression) -> Expression {

@@ -1,4 +1,3 @@
-
 #[derive(Debug, Eq, PartialEq)]
 pub enum Token<'value> {
     Identifier(&'value str),
@@ -6,6 +5,8 @@ pub enum Token<'value> {
     Plus,
     Divide,
     Multiply,
+    CompareEqual,
+    CompareNotEqual,
     Equal,
     Return,
     If,
@@ -49,7 +50,19 @@ impl Lexer {
                 },
                 '*' => tokens.push(Token::Multiply),
                 '/' => tokens.push(Token::Divide),
-                '=' => tokens.push(Token::Equal),
+                '=' => match chars.get(i + 1) {
+                    Some('=') => {
+                        tokens.push(Token::CompareEqual);
+                        i += 2;
+                        continue;
+                    }
+                    Some('!') => {
+                        tokens.push(Token::CompareNotEqual);
+                        i += 2;
+                        continue;
+                    }
+                    _ => tokens.push(Token::Equal),
+                },
                 '(' => tokens.push(Token::LeftParen),
                 ')' => tokens.push(Token::RightParen),
                 '{' => tokens.push(Token::LeftBracket),

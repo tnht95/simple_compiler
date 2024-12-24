@@ -6,10 +6,21 @@ statement = variable_declaration
           | function_call
           | assignment
           | print
+          | if_statement
           | ";" ;
 
 (* Variable declaration *)
 variable_declaration = "this", identifier, "=", expression, ";" ;
+
+(* If statement *)
+if_statement = "if", condition, block, ["else", block];
+
+(* Condition *)
+condition = comparison | logical_expression ;
+comparison = expression, comparison_operator,  expression ;
+logical_expression = condition ( "AND" | "OR" ) condition ; // not support yet
+comparison_operator =  "==" | "!=" ;
+
 
 (* Function declaration *)
 function_declaration = "fn " identifier

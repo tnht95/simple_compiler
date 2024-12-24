@@ -1,5 +1,5 @@
-use std::collections::HashSet;
 use crate::lexer::Token;
+use std::collections::HashSet;
 
 #[derive(Debug, Clone)]
 pub enum Program {
@@ -24,6 +24,11 @@ pub enum Statement {
         value: Expression,
     },
     Print(Expression),
+    IfStatement {
+        condition: Condition,
+        then_block: Block,
+        else_block: Option<Block>,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -36,6 +41,15 @@ pub struct Parameter {
 pub struct Block {
     pub statements: Vec<Statement>,
     pub return_expression: Option<Expression>,
+}
+
+#[derive(Debug, Clone)]
+pub enum Condition {
+    Comparison {
+        left: Expression,
+        operator: ComparativeOperator,
+        right: Expression,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -61,6 +75,12 @@ pub enum Operator {
     Divide,
 }
 
+#[derive(Clone, Debug)]
+pub enum ComparativeOperator {
+    Equal,
+    NotEqual,
+}
+
 #[derive(Debug, Clone)]
 pub enum TypeAnnotation {
     Int,
@@ -74,7 +94,11 @@ pub struct Parser<'a> {
 
 impl<'a> Parser<'a> {
     pub fn new(tokens: Vec<Token<'a>>) -> Self {
-        Self { tokens, pos: 0, symbol_map: Default::default() }
+        Self {
+            tokens,
+            pos: 0,
+            symbol_map: Default::default(),
+        }
     }
 
     pub fn parse(&mut self) -> Result<Program, String> {
@@ -152,6 +176,22 @@ impl<'a> Parser<'a> {
                 self.expect(Token::SemiColon)?;
                 Ok(Statement::Print(expression))
             }
+            Some(Token::If) => {
+                self.next(); // consume the If token
+                let condition = self.parse_condition()?;
+                let then_block = self.parse_block()?;
+                let mut else_block = None;
+                if self.peek() == Some(&Token::Else) {
+                    self.next(); // consume Else token
+                    else_block = Some(self.parse_block()?);
+                }
+                self.expect(Token::SemiColon)?;
+                Ok(Statement::IfStatement {
+                    condition,
+                    then_block,
+                    else_block,
+                })
+            }
 
             _ => Err("Invalid statement".to_string()),
         }
@@ -160,10 +200,10 @@ impl<'a> Parser<'a> {
     fn parse_variable_declaration(&mut self) -> Result<Statement, String> {
         self.expect(Token::This)?;
         let name = if let Some(Token::Identifier(name)) = self.get_current_and_next() {
-                name.to_string()
-            } else {
-                return Err("Expected an identifier after 'this'".to_string());
-            };
+            name.to_string()
+        } else {
+            return Err("Expected an identifier after 'this'".to_string());
+        };
         self.expect(Token::Equal)?;
         let value = self.parse_expression()?;
         Ok(Statement::VariableDeclaration {
@@ -392,5 +432,21 @@ impl<'a> Parser<'a> {
             Operator::Multiply | Operator::Divide => 2,
             Operator::Add | Operator::Subtract => 1,
         }
+    }
+
+    fn parse_condition(&mut self) -> Result<Condition, String> {
+        let left = self.parse_expression()?;
+        let operator = match self.get_current_and_next() {
+            Some(Token::CompareEqual) => ComparativeOperator::Equal,
+            Some(Token::CompareNotEqual) => ComparativeOperator::NotEqual,
+            _ => return Err("Unsupported comparative operator".to_string()),
+        };
+        let right = self.parse_expression()?;
+
+        Ok(Condition::Comparison {
+            left,
+            operator,
+            right,
+        })
     }
 }
