@@ -5,6 +5,7 @@ statement = variable_declaration
           | function_declaration
           | function_call
           | assignment
+          | print
           | ";" ;
 
 (* Variable declaration *)
@@ -25,6 +26,9 @@ block = "{", { statement }, [ return_statement ], "}" ;
 
 (* Return statement *)
 return_statement = "return", expression, ";" ;
+
+(* Print *)
+print = "print", "(", expression, ")", ";" ;
 
 (* Function call *)
 function_call = identifier, "(", [ argument_list ], ")" ;
