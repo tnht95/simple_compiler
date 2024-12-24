@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use crate::lexer::Token;
 
 #[derive(Debug, Clone)]
@@ -22,6 +23,7 @@ pub enum Statement {
         identifier: String,
         value: Expression,
     },
+    Print(Expression),
 }
 
 #[derive(Debug, Clone)]
@@ -67,11 +69,12 @@ pub enum TypeAnnotation {
 pub struct Parser<'a> {
     tokens: Vec<Token<'a>>,
     pos: usize,
+    symbol_map: HashSet<String>,
 }
 
 impl<'a> Parser<'a> {
     pub fn new(tokens: Vec<Token<'a>>) -> Self {
-        Self { tokens, pos: 0 }
+        Self { tokens, pos: 0, symbol_map: Default::default() }
     }
 
     pub fn parse(&mut self) -> Result<Program, String> {
@@ -141,6 +144,14 @@ impl<'a> Parser<'a> {
                 self.expect(Token::SemiColon)?;
                 Ok(func_decl)
             }
+            Some(Token::Print) => {
+                self.next(); // consume the Print token
+                self.expect(Token::LeftParen)?;
+                let expression = self.parse_expression()?;
+                self.expect(Token::RightParen)?;
+                self.expect(Token::SemiColon)?;
+                Ok(Statement::Print(expression))
+            }
 
             _ => Err("Invalid statement".to_string()),
         }
@@ -149,10 +160,10 @@ impl<'a> Parser<'a> {
     fn parse_variable_declaration(&mut self) -> Result<Statement, String> {
         self.expect(Token::This)?;
         let name = if let Some(Token::Identifier(name)) = self.get_current_and_next() {
-            name.to_string()
-        } else {
-            return Err("Expected an identifier after 'this'".to_string());
-        };
+                name.to_string()
+            } else {
+                return Err("Expected an identifier after 'this'".to_string());
+            };
         self.expect(Token::Equal)?;
         let value = self.parse_expression()?;
         Ok(Statement::VariableDeclaration {

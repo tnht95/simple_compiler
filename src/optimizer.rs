@@ -40,6 +40,7 @@ impl Optimizer {
                 identifier,
                 value: Self::constant_fold(&value),
             },
+            Statement::Print(expression) => Statement::Print(Self::constant_fold(&expression)),
         }
     }
 
