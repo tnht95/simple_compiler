@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io::Read;
+use crate::code_generator::CodeGenerator;
 use crate::lexer::Lexer;
 use crate::optimizer::Optimizer;
 use crate::parser::Parser;
@@ -7,6 +8,7 @@ use crate::parser::Parser;
 mod lexer;
 mod parser;
 mod optimizer;
+mod code_generator;
 
 fn main() {
     let  file = File::open("./src/optimization_cases.txt");
@@ -43,7 +45,14 @@ fn main() {
     let optimized_expression =  Optimizer::optimize_ast(ast);
     println!("{:#?}", optimized_expression);
 
-
+    println!("====================CODE GENERATE=============");
+    let mut code_generator = CodeGenerator::new();
+    let opcodes = code_generator.generate(optimized_expression);
+    let mut a = 0;
+    for op in opcodes {
+        println!("{} {:#?}",a, op);
+        a = a + 1;
+    }
 
 
 }
