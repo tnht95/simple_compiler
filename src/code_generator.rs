@@ -1,36 +1,39 @@
+use crate::parser::{
+    Block, ComparativeOperator, Condition, Expression, Operator, Program, Statement,
+};
 use std::collections::HashMap;
-use crate::parser::{Block, ComparativeOperator, Condition, Expression, Operator, Program, Statement};
 
 #[derive(Debug, Clone)]
 pub enum OpCode {
-    PUSH(i64),          // Push constant onto stack
-    POP,                // Pop value from stack
-    PRINT,
+    PUSH(i64), // Push constant onto stack
+    POP,       // Pop value from stack
+    PRINT,     // Print
 
     // Arithmetic
-    ADD,                // Add top two values on stack
-    SUB,                // Subtract
-    MUL,                // Multiply
-    DIV,                // Divide
+    ADD, // Add top two values on stack
+    SUB, // Subtract
+    MUL, // Multiply
+    DIV, // Divide
 
     // Variable operations
-    STORE(String),      // Store top of stack in variable
-    LOAD(String),       // Load variable onto stack
+    STORE(String), // Store top of stack in variable
+    LOAD(String),  // Load variable onto stack
 
     // Function operations
-    CALL(String, usize),   // Call function with name and number of arguments
-    RET,                // Return from function
-    ENTER(usize),         // Function prologue (number of local variables)
-    EXIT,              // Function epilogue
+    TailCall(String, usize), // Tail call function
+    CALL(String, usize),     // Call function with name and number of arguments
+    RET,                     // Return from function
+    ENTER(usize),            // Function prologue (number of local variables)
+    EXIT,                    // Function epilogue
 
     // Control Flow operations
-    JUMP(usize),         // Unconditional jump to instruction index
-    JmpIfFalse(usize),// Conditional jump if top of stack is false
-    JmpIfTrue(usize), // Conditional jump if top of stack is true
+    JUMP(usize),       // Unconditional jump to instruction index
+    JmpIfFalse(usize), // Conditional jump if top of stack is false
+    JmpIfTrue(usize),  // Conditional jump if top of stack is true
 
     // Comparison operations
-    EQUAL,              // Compare top two values for equality
-    NotEqual,          // Compare top two values for inequality
+    EQUAL,    // Compare top two values for equality
+    NotEqual, // Compare top two values for inequality
 }
 pub struct CodeGenerator {
     bytecode_list: Vec<OpCode>,
@@ -71,7 +74,9 @@ impl CodeGenerator {
                 self.generate_expression(value);
                 self.bytecode_list.push(OpCode::STORE(identifier));
             }
-            Statement::FunctionDeclaration { parameters, body, .. } => {
+            Statement::FunctionDeclaration {
+                parameters, body, ..
+            } => {
                 self.bytecode_list.push(OpCode::ENTER(parameters.len()));
                 let is_has_return_statement = body.return_expression.is_some();
                 self.generate_block(body);
@@ -88,7 +93,11 @@ impl CodeGenerator {
                 self.generate_expression(expr);
                 self.bytecode_list.push(OpCode::PRINT);
             }
-            Statement::IfStatement { condition, then_block, else_block } => {
+            Statement::IfStatement {
+                condition,
+                then_block,
+                else_block,
+            } => {
                 self.generate_condition(condition);
                 let else_label = self.get_new_label();
                 let end_label = self.get_new_label();
@@ -108,16 +117,29 @@ impl CodeGenerator {
 
     // generate code from block and return a boolean
     // which indicates this block has return or not
-    fn generate_block(&mut self, block: Block) -> bool{
+    fn generate_block(&mut self, block: Block) -> bool {
         let mut has_return = false;
         for statement in block.statements {
             self.generate_statement(statement);
         }
+
         if let Some(return_expr) = block.return_expression {
-            self.generate_expression(return_expr);
+            // if return statement only return function call
+            match return_expr {
+                Expression::FunctionCall { name, arguments } => {
+                    let arguments_length = arguments.len();
+                    for arg in arguments {
+                        self.generate_expression(arg);
+                    }
+                    self.bytecode_list
+                        .push(OpCode::TailCall(name, arguments_length));
+                }
+                _ => {
+                    self.generate_expression(return_expr);
+                }
+            }
             self.bytecode_list.push(OpCode::EXIT);
             self.bytecode_list.push(OpCode::RET);
-            has_return = true;
         }
 
         has_return
@@ -125,15 +147,15 @@ impl CodeGenerator {
 
     fn generate_condition(&mut self, condition: Condition) {
         match condition {
-        Condition::Comparison {
-            left,
-            operator,
-            right,
-        } => {
-            self.generate_expression(left);
-            self.generate_expression(right);
-            self.generate_comparative_operator(operator);
-        }
+            Condition::Comparison {
+                left,
+                operator,
+                right,
+            } => {
+                self.generate_expression(left);
+                self.generate_expression(right);
+                self.generate_comparative_operator(operator);
+            }
         }
     }
 
@@ -145,7 +167,11 @@ impl CodeGenerator {
             Expression::Identifier(name) => {
                 self.bytecode_list.push(OpCode::LOAD(name));
             }
-            Expression::ArithmeticExpression { left, operator, right } => {
+            Expression::ArithmeticExpression {
+                left,
+                operator,
+                right,
+            } => {
                 self.generate_expression(*left);
                 self.generate_expression(*right);
                 self.generate_operator(operator);
@@ -155,7 +181,8 @@ impl CodeGenerator {
                 for arg in arguments {
                     self.generate_expression(arg);
                 }
-                self.bytecode_list.push(OpCode::CALL(name, arguments_length));
+                self.bytecode_list
+                    .push(OpCode::CALL(name, arguments_length));
             }
         }
     }
@@ -192,7 +219,7 @@ impl CodeGenerator {
     fn emit_jump(&mut self, opcode: OpCode, label: usize) {
         let position = self.bytecode_list.len();
         self.bytecode_list.push(opcode); // Placeholder opcode with unresolved label
-        self.unresolved_jumps.push(( label, position ));
+        self.unresolved_jumps.push((label, position));
     }
 
     fn resolve_labels(&mut self) {
@@ -200,7 +227,8 @@ impl CodeGenerator {
             if let Some(&position) = self.label_positions.get(label) {
                 if let Some(opcode) = self.bytecode_list.get_mut(*index) {
                     match opcode {
-                        OpCode::JUMP(ref mut addr_placeholder) | OpCode::JmpIfFalse(ref mut addr_placeholder) => {
+                        OpCode::JUMP(ref mut addr_placeholder)
+                        | OpCode::JmpIfFalse(ref mut addr_placeholder) => {
                             *addr_placeholder = position;
                         }
                         _ => panic!("Unexpected opcode for label resolution"),
