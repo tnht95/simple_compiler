@@ -1,5 +1,4 @@
 use crate::lexer::Token;
-use std::collections::HashSet;
 
 #[derive(Debug, Clone)]
 pub enum Program {
@@ -89,16 +88,11 @@ pub enum TypeAnnotation {
 pub struct Parser<'a> {
     tokens: Vec<Token<'a>>,
     pos: usize,
-    symbol_map: HashSet<String>,
 }
 
 impl<'a> Parser<'a> {
     pub fn new(tokens: Vec<Token<'a>>) -> Self {
-        Self {
-            tokens,
-            pos: 0,
-            symbol_map: Default::default(),
-        }
+        Self { tokens, pos: 0 }
     }
 
     pub fn parse(&mut self) -> Result<Program, String> {
@@ -214,11 +208,7 @@ impl<'a> Parser<'a> {
 
     fn parse_function_declaration(&mut self) -> Result<Statement, String> {
         self.expect(Token::Func)?;
-        let name = if let Some(Token::Identifier(name)) = self.get_current_and_next() {
-            name.to_string()
-        } else {
-            return Err("Expected function name".to_string());
-        };
+        let name = self.get_identifier()?;
         self.expect(Token::LeftParen)?;
         let parameters = self.parse_parameter_list()?;
         self.expect(Token::RightParen)?;
@@ -291,11 +281,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_function_call_expression(&mut self) -> Result<Expression, String> {
-        let name = if let Some(Token::Identifier(name)) = self.get_current_and_next() {
-            name.to_string()
-        } else {
-            return Err("Expected function name".to_string());
-        };
+        let name = self.get_identifier()?;
         self.expect(Token::LeftParen)?;
         let arguments = self.parse_argument_list()?;
         self.expect(Token::RightParen)?;
@@ -448,5 +434,13 @@ impl<'a> Parser<'a> {
             operator,
             right,
         })
+    }
+
+    fn get_identifier(&mut self) -> Result<String, String> {
+        if let Some(Token::Identifier(name)) = self.get_current_and_next() {
+            Ok(name.to_string())
+        } else {
+            Err("Expected function name".to_string())
+        }
     }
 }

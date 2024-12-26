@@ -33,9 +33,7 @@ impl Optimizer {
                 return_type,
                 body: Self::optimize_block(body),
             },
-            Statement::FunctionCall(Expression) => {
-                Statement::FunctionCall(Self::constant_fold(&Expression))
-            }
+            Statement::FunctionCall(exp) => Statement::FunctionCall(Self::constant_fold(&exp)),
             Statement::Assignment { identifier, value } => Statement::Assignment {
                 identifier,
                 value: Self::constant_fold(&value),
