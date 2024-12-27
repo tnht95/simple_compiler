@@ -111,7 +111,7 @@ impl VirtualMachine {
                     .last_mut()
                     .expect("No frame for tail call");
                 frame.local_variables.clear();
-                println!("Tail call optimize for function: {}", name);
+                println!("Tail call - reuse stack frame for function: {}", name);
                 // Jump to the function's start
                 self.instruction_pointer = self.find_function_start(name);
             }
