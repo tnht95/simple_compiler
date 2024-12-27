@@ -1,0 +1,16 @@
+fn o(f: int, g: int) -> int {
+    return f;
+};
+
+fn example(x: int) -> int {
+    if x == 0 {
+        return o(3, 4);
+    } else {
+        x = 5;
+    };
+
+    return 4+5;
+};
+
+print(example(4));
+print(o(4,5));

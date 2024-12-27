@@ -1,0 +1,6 @@
+fn example(m: int) -> int{
+    m = 9 + 10 + m;
+    return m * 0 * 100 ;
+};
+
+example(5);
