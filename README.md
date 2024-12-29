@@ -1,7 +1,5 @@
 # Simple Compiler
 
-This is an implementation of a **Simple Compiler**, developed to demonstrate foundational concepts in compiler design and optimization. The project is written in **Rust** and highlights advanced techniques such as **Tail Call Optimization (TCO)** and **Constant Folding**.
-
 ## Key Features
 
 ### Tail Call Optimization (TCO)
